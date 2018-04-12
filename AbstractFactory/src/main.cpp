@@ -2,59 +2,78 @@
 #include <stdio.h>
 
 //--------------------------------------------------------------------------------
-class Base {
+class Base{
 public:
-    virtual ~Base(){
-        printf("%s() this=%p\n", __FUNCTION__, this);
-    }
+    int nr;
+    Base(int nr=0): nr(nr){}
+    virtual ~Base(){printf("%s() this=%p nr=%d\n", __FUNCTION__, this, nr);}
+    virtual const char* cls(){return nullptr;}//class ID
 };
 
 //--------------------------------------------------------------------------------
-class Derived1: public Base{
+class Derived: public Base{
 public:
-    static constexpr char name[256] = {"Derived1"};
-    int id;
-    Derived1(int id=1)
-        :id(id)
-    {printf("%s()\n", __FUNCTION__);}
+    Derived(int nr=1): Base(nr){printf("%s(%d)\n", __FUNCTION__, nr);}
+    const char* cls() override {return "Derived";}
+    static Base* create(){return new Derived(1973);}//creator function
 };
 
 //--------------------------------------------------------------------------------
 class Derived2: public Base{
 public:
-    static constexpr char name[256] = {"Derived2"};
-    int id;
-    Derived2(int id=2)
-        :id(id)
-    {printf("%s()\n", __FUNCTION__);}
-
-    static Base* create(){return new Derived2(1973);}
+    Derived2(int nr=2): Base(nr){printf("%s(%d)\n", __FUNCTION__, nr);}
+    const char* cls() override {return "Derived2";}
 };
 
 //--------------------------------------------------------------------------------
-int main(int argc, char** argv){
-    Factory<Base> factory;
+class DerivedCreator{//could be a life cycle manager for Derived objects
+public:
+    DerivedCreator(){}
+    Derived* create(){
+        static Derived singleton(2020);
+        return &singleton;
+    }
+};
+
+//--------------------------------------------------------------------------------
+int main(int /*argc*/, char** /*argv*/){
+    Factory<std::string, Base> factory;//factory for descendants of Base
+
     //factory.registerClass<Base>("Base");
-    factory.registerClass<Derived1>("Derived1");
-    factory.registerClass<Derived2>("Derived2");
-    factory.registerClass<Derived2>("Derived2_2", &Derived2::create);
+    factory.registerType<Derived>("Derived");
+    factory.registerType<Derived>("Derived_function", &Derived::create);//same class as above but different name and creator
+    factory.registerType<Derived>("Derived_lambda"  , [](){return new Derived(2018);});//same class as above but different name and lambda creator
+    DerivedCreator derivedCreator;
+    factory.registerType<Derived>("Derived_object"  , [&derivedCreator](){return derivedCreator.create();});//lambda + object creator
+    factory.registerType<Derived>("Derived_bind"    , std::bind(&DerivedCreator::create, derivedCreator));//using std::bind works but is discouraged since lambda
+    factory.registerType<Derived2>("Derived2");
 
+    auto b = factory.create<Base>("Base");//"Base" not registered
+    if(!b){printf("[%s()] \"%s\" not registered\n", __FUNCTION__, "Base");}
 
-    Base* b = factory.create<Base>("Base");
-    printf("b=%p\n", b);
-    delete b;
+    struct{
+        bool  deletable;
+        Base* ptr;
+    } arr[] = {//array of objects derived from Base created via factory
+        {true , factory.create<Derived >("Derived"          )},
+        {true , factory.create<Derived2>("Derived_function" )}, 
+        {true , factory.create<Derived2>("Derived_lambda"   )}, 
+        {false, factory.create<Derived2>("Derived_object"   )},//no delete because is a singleton 
+        {false, factory.create<Derived2>("Derived_bind"     )},//no delete because is a singleton 
+        {true , factory.create<Derived2>("Derived2"         )}, 
+    };
 
-    Derived1* d1 = factory.create<Derived1>("Derived1");
-    printf("d1: %s id=%d\n", d1->name, d1->id);//d1: Derived1 id=1
-    delete d1;
+    for(size_t i=0; i< sizeof(arr)/sizeof(arr[0]); ++i){
+        if(arr[i].ptr){
+            printf("%zd: %s nr=%d\n", i, arr[i].ptr->cls(), arr[i].ptr->nr);
+        }else{
+            printf("%zd: nullptr\n", i);
+        }
+        if(arr[i].deletable){
+            delete arr[i].ptr;
+        }
+    }
 
-    Derived2* d2 = factory.create<Derived2>("Derived2");
-    printf("d2: %s id=%d\n", d2->name, d2->id);//d2: Derived2 id=2
-    delete d2;
-
-    Derived2* d3 = factory.create<Derived2>("Derived2_2");
-    printf("d3: %s id=%d\n", d3->name, d3->id);//d3: Derived2 id=1973
-    delete d3;
-
+    printf("[%s()].\n", __FUNCTION__);
     return 0;
 }

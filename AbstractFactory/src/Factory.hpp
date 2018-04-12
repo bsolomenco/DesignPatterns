@@ -1,29 +1,29 @@
+#if 0 //Factory for objects derived from same Base class
+- can be used for Abstract Factory Pattern by using AbstractFactory interface as Base
+#endif
 #pragma once
+#include <functional>
 #include<map>
-#include<string>
-class Base;
 
-template<typename Base>class Factory{
+template<typename Key, typename Base>class Factory{
 public:
-    typedef Base* Create();
-
-    ~Factory(){
-        _createFuncMap.clear();
+    template<typename T> void registerType(
+        Key                    key, 
+        std::function<Base*()> creator=_creator<T>//could be function or lambda (bind works but discouraged since lambdas)
+    )
+    {
+        _creatorsMap[key] = creator;
     }
 
-    template<typename T> void registerClass(const char* name, Create* createFunc=&_create<T>){
-        _createFuncMap[name] = createFunc;
-    }
-
-    template<typename T> T* create(const char* name){//ToDo: call ctor with variable number of args
-        if(!_createFuncMap[name]){
-            printf("[%s()] \"%s\" not registered\n", __FUNCTION__, name);
+    template<typename T> T* create(Key key){
+        if(!_creatorsMap[key]){
             return nullptr;
         }
-        return (T*)_createFuncMap[name]();
+        return (T*)_creatorsMap[key]();
     }
 
 private:
-    template<typename T> static Base* _create(){return new T;}
-    std::map<std::string, Create*> _createFuncMap;
+    std::map<Key, std::function<Base*()>> _creatorsMap;
+
+    template<typename T> static Base* _creator(){return new T;}//default creator
 };
