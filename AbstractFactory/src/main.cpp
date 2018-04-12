@@ -62,7 +62,7 @@ int main(int /*argc*/, char** /*argv*/){
         struct{
             bool deletable;
             T0*  ptr;
-        } arr[] = {//array of objects derived from Base created via factory
+        } arr[] = {//array of objects derived from T0 created via factory
             {true , factory("T1"            )},
             {true , factory("T2"            )}, 
             {true , factory("T2_func"       )}, 
