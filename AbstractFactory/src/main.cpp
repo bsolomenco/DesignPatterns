@@ -1,39 +1,60 @@
 #include "Factory.hpp"
 #include <stdio.h>
 
+//--------------------------------------------------------------------------------
 class Base {
-protected:
-    virtual ~Base(){}
+public:
+    virtual ~Base(){
+        printf("%s() this=%p\n", __FUNCTION__, this);
+    }
 };
 
-class Descendant1: public Base{
+//--------------------------------------------------------------------------------
+class Derived1: public Base{
 public:
-    static constexpr char name[256] = {"Descendant1"};
+    static constexpr char name[256] = {"Derived1"};
     int id;
-    Descendant1(int id=1)
+    Derived1(int id=1)
         :id(id)
-    {}
+    {printf("%s()\n", __FUNCTION__);}
 };
 
-class Descendant2: public Base{
+//--------------------------------------------------------------------------------
+class Derived2: public Base{
 public:
-    static constexpr char name[256] = {"Descendant2"};
+    static constexpr char name[256] = {"Derived2"};
     int id;
-    Descendant2(int id=2)
+    Derived2(int id=2)
         :id(id)
-    {}
+    {printf("%s()\n", __FUNCTION__);}
+
+    static Base* create(){return new Derived2(1973);}
 };
 
 //--------------------------------------------------------------------------------
 int main(int argc, char** argv){
-    Factory factory;
-    //factory.registerClass<Base>("Cls1");
-    factory.registerClass<Descendant1>("Descendant1");
-    factory.registerClass<Descendant2>("Descendant2");
+    Factory<Base> factory;
+    //factory.registerClass<Base>("Base");
+    factory.registerClass<Derived1>("Derived1");
+    factory.registerClass<Derived2>("Derived2");
+    factory.registerClass<Derived2>("Derived2_2", &Derived2::create);
 
-    Base* d1 = factory.create("Descendant1");
-    printf("d1: %s id=%d\n", ((Descendant1*)d1)->name, ((Descendant1*)d1)->id);
-    Base* d2 = factory.create("Descendant2");
-    printf("d2: %s id=%d\n", ((Descendant2*)d2)->name, ((Descendant2*)d2)->id);
+
+    Base* b = factory.create<Base>("Base");
+    printf("b=%p\n", b);
+    delete b;
+
+    Derived1* d1 = factory.create<Derived1>("Derived1");
+    printf("d1: %s id=%d\n", d1->name, d1->id);//d1: Derived1 id=1
+    delete d1;
+
+    Derived2* d2 = factory.create<Derived2>("Derived2");
+    printf("d2: %s id=%d\n", d2->name, d2->id);//d2: Derived2 id=2
+    delete d2;
+
+    Derived2* d3 = factory.create<Derived2>("Derived2_2");
+    printf("d3: %s id=%d\n", d3->name, d3->id);//d3: Derived2 id=1973
+    delete d3;
+
     return 0;
 }

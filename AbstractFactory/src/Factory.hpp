@@ -3,18 +3,27 @@
 #include<string>
 class Base;
 
-class Factory{
-private:
-    typedef Base* (CreateFunc)();
-    std::map<std::string, CreateFunc*> _createFuncMap;
+template<typename Base>class Factory{
 public:
-    template<typename T> void registerClass(const char* name){
-        _createFuncMap[name] = &_createFunc<T>;
+    typedef Base* Create();
+
+    ~Factory(){
+        _createFuncMap.clear();
     }
 
-    Base* create(const char* name){//ToDo: call ctor with variable number of args
-        return _createFuncMap[name]();
+    template<typename T> void registerClass(const char* name, Create* createFunc=&_create<T>){
+        _createFuncMap[name] = createFunc;
     }
+
+    template<typename T> T* create(const char* name){//ToDo: call ctor with variable number of args
+        if(!_createFuncMap[name]){
+            printf("[%s()] \"%s\" not registered\n", __FUNCTION__, name);
+            return nullptr;
+        }
+        return (T*)_createFuncMap[name]();
+    }
+
 private:
-    template<typename T> static Base* _createFunc(){return new T;}
+    template<typename T> static Base* _create(){return new T;}
+    std::map<std::string, Create*> _createFuncMap;
 };
