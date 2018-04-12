@@ -1,4 +1,6 @@
 #if 0 //Factory for objects derived from same Base class
+- maintains association between a key and a creator for a type
+- returns a pointer to an instance of type associated with a key
 - can be used for Abstract Factory Pattern by using AbstractFactory interface as Base
 #endif
 #pragma once
