@@ -11,11 +11,11 @@ endif (UNIX)
 add_definitions(-Wall)
 #add_definitions(-W4)
 
-add_subdirectory(AbstractFactory)
+add_subdirectory(Factory)
 
 #Visual Studio file filters
 source_group(""    FILES ${SRC})
 source_group("ref" FILES ${SRC_REF})
 
-#set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT AbstractFactory)
-#install(TARGETS AbstractFactory DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/inst/")
+#set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Factory)
+#install(TARGETS Factory DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}/inst/")
