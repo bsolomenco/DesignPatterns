@@ -52,6 +52,7 @@ int main(int /*argc*/, char** /*argv*/){
 
     {//simple usage
         printf("======== simple usage:\n");
+        T0* t0 = factory("T1");//T1 instance saved as base type
         T1* t1 = factory("T1");//no need to cast explicitly, it happens automagically
         delete t1;
         T2* t2 = factory("T2");
